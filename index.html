@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Viksit Sadak Suraksha Map</title>
+    <!-- Leaflet CSS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""
+    />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1a73e8, #0d47a1);
+            color: white;
+            padding: 1.2rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
+            position: relative;
+            z-index: 1000;
+        }
+        header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        #map {
+            flex: 1;
+            position: relative;
+            background: #e0eafc;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 1000;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 50px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        .controls:hover {
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+        }
+        .btn {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        .btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+        .btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(26, 115, 232, 0.5);
+        }
+        .btn.secondary {
+            background: #34a853;
+            box-shadow: 0 4px 12px rgba(52, 168, 83, 0.4);
+        }
+        .btn.secondary:hover {
+            box-shadow: 0 8px 20px rgba(52, 168, 83, 0.5);
+        }
+        .btn.danger {
+            background: #ea4335;
+            box-shadow: 0 4px 12px rgba(234, 67, 53, 0.4);
+        }
+        .btn.danger:hover {
+            box-shadow: 0 8px 20px rgba(234, 67, 53, 0.5);
+        }
+
+        .tooltip {
+            position: relative;
+        }
+        .tooltip::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a1a;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .tooltip::before {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #1a1a1a;
+            opacity: 0;
+            transition: all 0.3s ease;
+            margin-bottom: 4px;
+        }
+        .tooltip:hover::after,
+        .tooltip:hover::before {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-4px);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: fadeIn 0.4s ease;
+        }
+        .modal.open {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 92%;
+            max-width: 440px;
+            padding: 1.8rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.2rem;
+        }
+        .modal-header h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+        .close {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.2s;
+        }
+        .close:hover {
+            color: #ea4335;
+        }
+        label {
+            display: block;
+            margin: 1rem 0 0.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #444;
+        }
+        select, textarea {
+            width: 100%;
+            padding: 0.9rem;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+        select:focus, textarea:focus {
+            outline: none;
+            border-color: #1a73e8;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+        }
+        textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+        .file-input-wrapper {
+            margin-top: 1rem;
+        }
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 1rem;
+            background: #f8f9fa;
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .file-input-label:hover {
+            background: #e8f4fd;
+            border-color: #1a73e8;
+        }
+        .file-preview {
+            margin-top: 1rem;
+            text-align: center;
+            display: none;
+        }
+        .file-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .remove-photo {
+            margin-top: 0.5rem;
+            color: #ea4335;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .modal-actions {
+            margin-top: 1.8rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .leaderboard {
+            margin: 1rem;
+            background: white;
+            border-radius: 18px;
+            padding: 1.3rem;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .leaderboard h3 {
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            color: #1a73e8;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sync-info {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: 500;
+        }
+        .leaderboard ul {
+            list-style: none;
+        }
+        .leaderboard li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        .leaderboard li:hover {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+            margin: 0 -0.5rem;
+        }
+        .leaderboard li:last-child {
+            border-bottom: none;
+        }
+        .leaderboard .you {
+            font-weight: 700;
+            color: #1a73e8;
+            font-size: 1.05rem;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(40px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .pulsing-circle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #1a73e8;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 999;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.7);
+        }
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 20px rgba(26, 115, 232, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(26, 115, 232, 0);
+            }
+        }
+        #toast {
+            display: none;
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a73e8;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 1.05em;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(26,115,232,0.18);
+            z-index: 5000;
+            animation: fadeInToast 0.5s;
+        }
+        @keyframes fadeInToast {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px);}
+            to { opacity: 1; transform: translateX(-50%) translateY(0);}
+        }
+        @media (min-width: 768px) {
+            .controls {
+                bottom: 30px;
+            }
+            header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header>
+            <h1>
+                Viksit Sadak Suraksha Map ✅
+            </h1>
+        </header>
+        <!-- Map Container -->
+        <div id="map"></div>
+        <!-- Floating Action Buttons -->
+        <div class="controls">
+            <button id="add-issue-btn" class="btn tooltip" data-tip="Report new issue">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 2a10 10 0 0 1 10 10a10 10 0 0 1-10 10a10 10 0 0 1-10-10A10 10 0 0 1 12 2z"/>
+                    <path d="M12 8v8"/>
+                    <path d="M8 12h8"/>
+                </svg>
+            </button>
+            <button id="location-btn" class="btn secondary tooltip" data-tip="Find my location">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <line x1="12" y1="2" x2="12" y2="6"></line>
+                    <line x1="12" y1="18" x2="12" y2="22"></line>
+                    <line x1="2" y1="12" x2="6" y2="12"></line>
+                    <line x1="18" y1="12" x2="22" y2="12"></line>
+                </svg>
+            </button>
+            <button id="export-btn" class="btn danger tooltip" data-tip="Export all reports">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+            </button>
+        </div>
+        <div class="leaderboard">
+            <h3>
+                Leaderboard
+                <span class="sync-info">Last synced: just now</span>
+            </h3>
+            <ul id="leaderboard-list"></ul>
+        </div>
+    </div>
+    <!-- Report Modal -->
+    <div id="report-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Report Road Issue</h2>
+                <button class="close" aria-label="Close">&times;</button>
+            </div>
+            <form id="report-form">
+                <label for="issue-type">Issue Type</label>
+                <select id="issue-type" required>
+                    <option value="">Choose issue...</option>
+                    <option value="Pothole">Pothole</option>
+                    <option value="Broken Drain">Broken Drain</option>
+                    <option value="Garbage Dump">Garbage Dump</option>
+                </select>
+                <label for="description">Description (optional)</label>
+                <textarea id="description" placeholder="Describe the issue..."></textarea>
+                <div class="file-input-wrapper">
+                    <input type="file" id="photo-upload" accept="image/*" hidden />
+                    <label for="photo-upload" class="file-input-label">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <circle cx="12" cy="13" r="3"/>
+                            <path d="M21 15l-3.1-3.1a2 2 0 0 0-2.8 0l-6 6"/>
+                        </svg>
+                        Add Photo
+                    </label>
+                </div>
+                <div class="file-preview" id="file-preview">
+                    <img id="preview-img" />
+                    <div class="remove-photo" id="remove-photo">Remove photo</div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn secondary" id="cancel-btn">Cancel</button>
+                    <button type="submit" class="btn">Submit Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Toast Notification -->
+    <div id="toast">Thanks for being responsible person for nation 🇮🇳</div>
+    <!-- Leaflet JS -->
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""
+    ></script>
+    <script>
+        // ==============================
+        // 1. Initialize Map
+        // ==============================
+        const map = L.map('map').setView([28.6, 77.2], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+        const defaultIcon = L.icon({
+            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+            iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        // ==============================
+        // 2. LocalStorage & Reports
+        // ==============================
+        const STORAGE_KEY = 'roadIssues';
+        const USER_KEY = 'demoUserReports';
+
+        function loadReports() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            return data ? JSON.parse(data) : [];
+        }
+        function saveReports(reports) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
+        }
+        function loadUserReportCount() {
+            return parseInt(localStorage.getItem(USER_KEY) || '0', 10);
+        }
+        function saveUserReportCount(count) {
+            localStorage.setItem(USER_KEY, count.toString());
+        }
+
+        // ==============================
+        // 3. Leaderboard
+        // ==============================
+        const fakeContributors = [
+            { name: 'Rajesh Kumar', count: 22 },
+            { name: 'Priya Sharma', count: 19 },
+            { name: 'Amit Patel', count: 16 },
+            { name: 'Neha Singh', count: 14 },
+            { name: 'Vikram Mehta', count: 11 }
+        ];
+        function updateLeaderboard() {
+            const list = document.getElementById('leaderboard-list');
+            const userCount = loadUserReportCount();
+            const all = [...fakeContributors];
+            if (userCount > 0) {
+                all.push({ name: 'You (Demo User)', count: userCount, isYou: true });
+            }
+            all.sort((a, b) => b.count - a.count);
+            list.innerHTML = all.map((p, i) => `
+                <li>
+                    <span>${i < 3 ? '<strong>#' + (i+1) + '</strong> ' : ''}${p.isYou ? '<span class="you">' + p.name + '</span>' : p.name}</span>
+                    <strong>${p.count} ${p.count === 1 ? 'report' : 'reports'}</strong>
+                </li>
+            `).join('');
+        }
+        updateLeaderboard();
+        setInterval(() => {
+            document.querySelector('.sync-info').textContent = 
+                'Last synced: ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }, 30000);
+
+        // ==============================
+        // 4. Sample Reports
+        // ==============================
+        const sampleReports = [
+            { lat: 28.6139, lng: 77.2090, type: 'Pothole', desc: 'Deep pothole causing traffic jam', time: new Date(Date.now() - 86400000).toISOString(), photo: null },
+            { lat: 28.5800, lng: 77.2300, type: 'Broken Drain', desc: 'Missing manhole cover - safety hazard', time: new Date(Date.now() - 172800000).toISOString(), photo: null },
+            { lat: 28.6200, lng: 77.1800, type: 'Garbage Dump', desc: '', time: new Date(Date.now() - 259200000).toISOString(), photo: null }
+        ];
+        function addMarker(report, isSample = false) {
+            const marker = L.marker([report.lat, report.lng], { icon: defaultIcon }).addTo(map);
+            let html = `<strong style="color:#1a73e8; font-size:1.1em;">${report.type}</strong>`;
+            if (report.desc) html += `<br><em>${report.desc}</em>`;
+            if (report.photo) {
+                html += `<br><img src="${report.photo}" style="max-width:100%; margin-top:10px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">`;
+            }
+            html += `<br><small style="color:#666;">${new Date(report.time).toLocaleString()}</small>`;
+            marker.bindPopup(html, { maxWidth: 300 });
+            if (!isSample) {
+                const count = loadUserReportCount() + 1;
+                saveUserReportCount(count);
+                updateLeaderboard();
+            }
+        }
+        let reports = loadReports();
+        if (reports.length === 0) {
+            reports = [...sampleReports];
+            saveReports(reports);
+        }
+        reports.forEach(r => addMarker(r, true));
+
+        // ==============================
+        // 5. Modal & Photo Upload
+        // ==============================
+        const modal = document.getElementById('report-modal');
+        const form = document.getElementById('report-form');
+        const closeBtn = document.querySelector('.close');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const photoInput = document.getElementById('photo-upload');
+        const previewContainer = document.getElementById('file-preview');
+        const previewImg = document.getElementById('preview-img');
+        const removePhotoBtn = document.getElementById('remove-photo');
+        let pendingLatLng = null;
+        let currentPhotoData = null;
+
+        // ==============================
+        // Toast Notification Function
+        // ==============================
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        function openModal(latLng) {
+            pendingLatLng = latLng;
+            modal.classList.add('open');
+            setTimeout(() => document.getElementById('issue-type').focus(), 100);
+            currentPhotoData = null;
+            previewContainer.style.display = 'none';
+            photoInput.value = '';
+        }
+        function closeModal() {
+            modal.classList.remove('open');
+            form.reset();
+            pendingLatLng = null;
+            currentPhotoData = null;
+            previewContainer.style.display = 'none';
+            photoInput.value = '';
+        }
+        closeBtn.onclick = cancelBtn.onclick = closeModal;
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        photoInput.addEventListener('change', () => {
+            const file = photoInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentPhotoData = e.target.result;
+                    previewImg.src = currentPhotoData;
+                    previewContainer.style.display = 'block';
+                    showToast("Thanks for being responsible person for nation 🇮🇳");
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        removePhotoBtn.addEventListener('click', () => {
+            currentPhotoData = null;
+            previewContainer.style.display = 'none';
+            photoInput.value = '';
+        });
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const type = document.getElementById('issue-type').value;
+            const desc = document.getElementById('description').value.trim();
+            const report = {
+                lat: pendingLatLng.lat,
+                lng: pendingLatLng.lng,
+                type,
+                desc,
+                photo: currentPhotoData,
+                time: new Date().toISOString()
+            };
+            reports.push(report);
+            saveReports(reports);
+            addMarker(report);
+            closeModal();
+        });
+
+        // ==============================
+        // 6. Click to Report
+        // ==============================
+        const addIssueBtn = document.getElementById('add-issue-btn');
+        let clickMode = false;
+        addIssueBtn.addEventListener('click', () => {
+            clickMode = !clickMode;
+            addIssueBtn.style.transform = clickMode ? 'translateY(-3px) scale(1.1)' : '';
+            alert(clickMode 
+                ? 'Tap anywhere on the map to report an issue.'
+                : 'Map click mode disabled.'
+            );
+        });
+        map.on('click', (e) => {
+            if (!clickMode) return;
+            clickMode = false;
+            addIssueBtn.style.transform = '';
+            openModal(e.latlng);
+        });
+
+        // ==============================
+        // 7. Live Location with Pulsing Animation and Moving Marker
+        // ==============================
+        const locationBtn = document.getElementById('location-btn');
+        let userLocationMarker = null;
+        let pulsingCircle = null;
+        let watchId = null;
+        locationBtn.addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                return;
+            }
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                locationBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <line x1="12" y1="2" x2="12" y2="6"></line>
+                    <line x1="12" y1="18" x2="12" y2="22"></line>
+                    <line x1="2" y1="12" x2="6" y2="12"></line>
+                    <line x1="18" y1="12" x2="22" y2="12"></line>
+                </svg>`;
+                if (pulsingCircle) {
+                    document.body.removeChild(pulsingCircle);
+                    pulsingCircle = null;
+                }
+                if (userLocationMarker) {
+                    map.removeLayer(userLocationMarker);
+                    userLocationMarker = null;
+                }
+                return;
+            }
+            locationBtn.disabled = true;
+            locationBtn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border:3px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;"></div>';
+            watchId = navigator.geolocation.watchPosition(
+                (pos) => {
+                    const { latitude, longitude, accuracy } = pos.coords;
+                    map.setView([latitude, longitude], 17);
+                    if (userLocationMarker) {
+                        userLocationMarker.setLatLng([latitude, longitude]);
+                        userLocationMarker.openPopup();
+                    } else {
+                        userLocationMarker = L.circleMarker([latitude, longitude], {
+                            radius: 10,
+                            fillColor: '#1a73e8',
+                            color: '#0d47a1',
+                            weight: 3,
+                            opacity: 1,
+                            fillOpacity: 0.8
+                        }).addTo(map).bindPopup('You are here').openPopup();
+                    }
+                    // Pulsing circle
+                    if (!pulsingCircle) {
+                        pulsingCircle = document.createElement('div');
+                        pulsingCircle.className = 'pulsing-circle';
+                        document.body.appendChild(pulsingCircle);
+                    }
+                    const point = map.latLngToContainerPoint([latitude, longitude]);
+                    pulsingCircle.style.left = point.x + 'px';
+                    pulsingCircle.style.top = point.y + 'px';
+
+                    locationBtn.disabled = false;
+                    locationBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="12" cy="12" r="10" stroke-dasharray="4 4"></circle>
+                        <circle cx="12" cy="12" r="4"></circle>
+                    </svg>`;
+                },
+                (err) => {
+                    alert('Location access denied or unavailable.');
+                    locationBtn.disabled = false;
+                    locationBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="12" r="4"></circle>
+                        <line x1="12" y1="2" x2="12" y2="6"></line>
+                        <line x1="12" y1="18" x2="12" y2="22"></line>
+                        <line x1="2" y1="12" x2="6" y2="12"></line>
+                        <line x1="18" y1="12" x2="22" y2="12"></line>
+                    </svg>`;
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        });
+
+        // Spinner animation for location loading
+        const style = document.createElement('style');
+        style.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
+        document.head.appendChild(style);
+
+        // ==============================
+        // 8. Export
+        // ==============================
+        document.getElementById('export-btn').addEventListener('click', () => {
+            const data = JSON.stringify(reports, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `road-issues-${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>
