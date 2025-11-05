@@ -239,7 +239,7 @@
             font-size: 1rem;
             color: #444;
         }
-        select, textarea {
+        input[type="text"], select, textarea {
             width: 100%;
             padding: 1rem;
             border: 2px solid #e0e0e0;
@@ -248,7 +248,7 @@
             transition: all 0.3s ease;
             background: #fafafa;
         }
-        select:focus, textarea:focus {
+        input[type="text"]:focus, select:focus, textarea:focus {
             outline: none;
             border-color: var(--primary-color);
             background: white;
@@ -406,16 +406,16 @@
         }
 
         /* --- Welcome Modal Specific Styles --- */
-        #welcome-modal .modal-content {
+        #welcome-modal .modal-content, #success-modal .modal-content, #name-prompt-modal .modal-content {
             text-align: center;
             padding: 2.5rem 2rem;
         }
-        #welcome-modal h2 {
+        #welcome-modal h2, #success-modal h2, #name-prompt-modal h2 {
             font-size: 2rem;
             color: var(--primary-color);
             margin-bottom: 0.5rem;
         }
-        #welcome-modal p {
+        #welcome-modal p, #success-modal p, #name-prompt-modal p {
             font-size: 1rem;
             color: var(--text-light);
             margin-bottom: 2rem;
@@ -440,7 +440,7 @@
             width: 1em;
             margin-left: -1em;
         }
-        #start-contribution-btn {
+        #start-contribution-btn, #continue-contributing-btn {
             background: var(--success-color);
             width: 80%;
             max-width: 300px;
@@ -448,10 +448,69 @@
             border-radius: 30px;
             font-size: 1.1rem;
         }
-        #start-contribution-btn:hover {
+        #start-contribution-btn:hover, #continue-contributing-btn:hover {
             background: #3e8e41;
         }
-        /* End Welcome Modal Styles */
+
+        /* Success Modal Specific Styles */
+        #success-modal .modal-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #success-modal .modal-header {
+            width: 100%;
+            margin-bottom: 0;
+        }
+        #success-modal h2 {
+            color: var(--success-color);
+            font-size: 1.8rem;
+            margin-top: 0.5rem;
+        }
+        #success-modal .modal-actions {
+            margin-top: 1.5rem;
+            width: 100%;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #success-modal .modal-actions button {
+            width: 100%;
+            border-radius: 12px;
+            height: 50px;
+        }
+        #success-modal .success-icon {
+            color: var(--success-color);
+            font-size: 4rem;
+            margin: 1rem 0;
+            animation: bounceIn 0.8s ease-out;
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        /* End Success Modal Styles */
+
+        /* Name Prompt Modal Styles */
+        #name-prompt-modal .modal-actions {
+            justify-content: center;
+        }
+        #name-submit-btn {
+            width: 100%;
+            max-width: 250px;
+            border-radius: 12px;
+        }
+
+        /* Footer Styles */
+        #footer {
+            background: var(--background-light);
+            padding: 1rem 1rem 0.5rem;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-light);
+            border-top: 1px solid #e0e0e0;
+            flex-shrink: 0; /* Prevents shrinking */
+        }
 
         @media (min-width: 768px) {
             .controls { bottom: 30px; }
@@ -547,9 +606,14 @@
             </h3>
             <ul id="leaderboard-list"></ul>
         </div>
+
+        <!-- New Footer Element -->
+        <footer id="footer">
+            &copy; 2025 created by **Team iron heart**
+        </footer>
     </div>
     
-    <!-- Welcome Modal (NEW) -->
+    <!-- Welcome Modal (Initial Information) -->
     <div id="welcome-modal" class="modal">
         <div class="modal-content">
             <h2>Welcome to Viksit Sadak Suraksha Map!</h2>
@@ -573,12 +637,33 @@
             </button>
         </div>
     </div>
-      <!-- Report Modal -->
+
+    <!-- Name Prompt Modal (NEW) -->
+    <div id="name-prompt-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Your Identity</h2>
+                <button class="close" id="close-name-modal" aria-label="Close">&times;</button>
+            </div>
+            <form id="name-form">
+                <p>Please enter your name for the report and leaderboard.</p>
+                <label for="contributor-name">Your Name</label>
+                <input type="text" id="contributor-name" placeholder="E.g., Rajesh Kumar" required />
+                <div class="modal-actions">
+                    <button type="submit" class="btn" id="name-submit-btn">
+                        Proceed to Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Report Modal -->
     <div id="report-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Report Road Issue</h2>
-                <button class="close" aria-label="Close">&times;</button>
+                <button class="close" id="close-report-modal" aria-label="Close">&times;</button>
             </div>
             <form id="report-form">
                 <label for="issue-type">Issue Type</label>
@@ -597,13 +682,14 @@
                 <textarea id="description" placeholder="Describe the issue..."></textarea>
                 <div class="file-input-wrapper">
                     <input type="file" id="photo-upload" accept="image/*" hidden />
+                    <!-- Updated Label Here -->
                     <label for="photo-upload" class="file-input-label">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                             <polyline points="16 10 12 6 8 10"/>
                             <line x1="12" y1="15" x2="12" y2="6"/>
                         </svg>
-                        Upload Photo (Optional)
+                        Picture of your issue
                     </label>
                 </div>
                 <div class="file-preview" id="file-preview">
@@ -619,6 +705,27 @@
             </form>
         </div>
     </div>
+
+    <!-- Success Modal (NEW) -->
+    <div id="success-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div style="width: 24px;"></div> <!-- Placeholder to center title -->
+                <h2>Success!</h2>
+                <button class="close" id="close-success-modal" aria-label="Close">&times;</button>
+            </div>
+            <span class="success-icon">&#10003;</span>
+            <p>
+                Thank you for your valuable contribution, **<span id="contributor-name-display"></span>**! Your report has been successfully sent.
+            </p>
+            <div class="modal-actions">
+                <button id="contribute-more-btn" class="btn secondary">
+                    Contribute More (Go to My Location)
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast"></div>
 
@@ -639,10 +746,8 @@
         // ==============================
         // 1. Initialize Map
         // ==============================
-        // Set up the map with scroll zoom enabled for smoother navigation
         const map = L.map('map', { scrollWheelZoom: true }).setView([28.6139, 77.2090], 12); // Centered near New Delhi
         
-        // Switched to CartoDB Positron for a cleaner, smoother map look
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
             subdomains: 'abcd',
@@ -663,8 +768,9 @@
         // 2. LocalStorage & Reports
         // ==============================
         const STORAGE_KEY = 'roadIssues_v2';
-        const USER_KEY = 'demoUserReports_v2';
-        const WELCOME_SEEN_KEY = 'welcomeScreenSeen'; // New key for welcome screen
+        const USER_REPORTS_KEY = 'demoUserReports_v2';
+        const USER_NAME_KEY = 'contributorName'; // New key for storing the user's name
+        const WELCOME_SEEN_KEY = 'welcomeScreenSeen';
 
         function loadReports() {
             const data = localStorage.getItem(STORAGE_KEY);
@@ -674,10 +780,16 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
         }
         function loadUserReportCount() {
-            return parseInt(localStorage.getItem(USER_KEY) || '0', 10);
+            return parseInt(localStorage.getItem(USER_REPORTS_KEY) || '0', 10);
         }
         function saveUserReportCount(count) {
-            localStorage.setItem(USER_KEY, count.toString());
+            localStorage.setItem(USER_REPORTS_KEY, count.toString());
+        }
+        function loadContributorName() {
+            return localStorage.getItem(USER_NAME_KEY) || '';
+        }
+        function saveContributorName(name) {
+            localStorage.setItem(USER_NAME_KEY, name.trim());
         }
 
         // ==============================
@@ -693,15 +805,19 @@
         function updateLeaderboard() {
             const list = document.getElementById('leaderboard-list');
             const userCount = loadUserReportCount();
+            const userName = loadContributorName() || 'You (Demo User)';
             const all = [...fakeContributors];
-            if (userCount > 0) {
-                // Ensure 'You' is always visible if they have reports
-                if (!all.find(p => p.isYou)) {
-                    all.push({ name: 'You (Demo User)', count: userCount, isYou: true });
-                } else {
-                    all.find(p => p.isYou).count = userCount;
-                }
+            
+            // Find existing "You" entry or create a new one
+            let userEntry = all.find(p => p.isYou);
+            if (!userEntry) {
+                userEntry = { name: userName, count: userCount, isYou: true };
+                all.push(userEntry);
             }
+            userEntry.name = userName;
+            userEntry.count = userCount;
+            
+
             all.sort((a, b) => b.count - a.count);
             list.innerHTML = all.map((p, i) => `
                 <li>
@@ -720,9 +836,9 @@
         // 4. Load/Add Markers
         // ==============================
         const sampleReports = [
-            { lat: 28.6139, lng: 77.2090, type: 'Pothole', desc: 'Deep pothole causing traffic jam', time: new Date(Date.now() - 86400000).toISOString(), photo: null },
-            { lat: 28.5800, lng: 77.2300, type: 'Broken Drain', desc: 'Missing manhole cover - safety hazard', time: new Date(Date.now() - 172800000).toISOString(), photo: null },
-            { lat: 28.6200, lng: 77.1800, type: 'Garbage Dump', desc: '', time: new Date(Date.now() - 259200000).toISOString(), photo: null }
+            { lat: 28.6139, lng: 77.2090, type: 'Pothole', desc: 'Deep pothole causing traffic jam', contributor: 'Admin', time: new Date(Date.now() - 86400000).toISOString(), photo: null },
+            { lat: 28.5800, lng: 77.2300, type: 'Broken Drain', desc: 'Missing manhole cover - safety hazard', contributor: 'Admin', time: new Date(Date.now() - 172800000).toISOString(), photo: null },
+            { lat: 28.6200, lng: 77.1800, type: 'Garbage Dump', desc: '', contributor: 'Admin', time: new Date(Date.now() - 259200000).toISOString(), photo: null }
         ];
         function addMarker(report, isSample = false) {
             const marker = L.marker([report.lat, report.lng], { icon: defaultIcon }).addTo(map);
@@ -731,7 +847,7 @@
             if (report.photo) {
                 html += `<br><img src="${report.photo}" style="max-width:100%; margin-top:10px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">`;
             }
-            html += `<br><small style="color:#666;">${new Date(report.time).toLocaleString()}</small>`;
+            html += `<br><small style="color:#666;">Reported by: <b>${report.contributor || 'Anonymous'}</b> on ${new Date(report.time).toLocaleString()}</small>`;
             html += `<br><small style="color:#888;">Lat: ${report.lat.toFixed(4)}, Lng: ${report.lng.toFixed(4)}</small>`;
             marker.bindPopup(html, { maxWidth: 300 });
 
@@ -753,18 +869,21 @@
         // ==============================
         // 5. Modals & Photo Upload
         // ==============================
-        const modal = document.getElementById('report-modal');
+        const reportModal = document.getElementById('report-modal');
         const welcomeModal = document.getElementById('welcome-modal');
-        const form = document.getElementById('report-form');
+        const namePromptModal = document.getElementById('name-prompt-modal'); // New
+        const successModal = document.getElementById('success-modal');       // New
+        
+        const reportForm = document.getElementById('report-form');
+        const nameForm = document.getElementById('name-form');               // New
         const submitBtn = document.getElementById('submit-report-btn');
-        const closeBtn = document.querySelector('#report-modal .close');
-        const cancelBtn = document.getElementById('cancel-btn');
         const photoInput = document.getElementById('photo-upload');
         const previewContainer = document.getElementById('file-preview');
         const previewImg = document.getElementById('preview-img');
         const removePhotoBtn = document.getElementById('remove-photo');
         const startContributionBtn = document.getElementById('start-contribution-btn');
-        
+        const contributeMoreBtn = document.getElementById('contribute-more-btn'); // New
+
         let pendingLatLng = null;
         let currentPhotoData = null; // Base64 Data URL
 
@@ -794,9 +913,28 @@
             }, 4000); /* Show for 4 seconds */
         }
 
-        function openModal(latLng) {
+        /* --- Modal Control Functions --- */
+
+        function openNamePrompt(callback) {
+            document.getElementById('contributor-name').value = loadContributorName();
+            namePromptModal.classList.add('open');
+            nameForm.onsubmit = (e) => {
+                e.preventDefault();
+                const name = document.getElementById('contributor-name').value.trim();
+                saveContributorName(name);
+                updateLeaderboard(); // Update leaderboard with new name
+                closeNamePrompt();
+                if (callback) callback();
+            };
+        }
+        function closeNamePrompt() {
+            namePromptModal.classList.remove('open');
+            nameForm.onsubmit = null;
+        }
+
+        function openReportModal(latLng) {
             pendingLatLng = latLng;
-            modal.classList.add('open');
+            reportModal.classList.add('open');
             document.getElementById('issue-type').focus();
             currentPhotoData = null;
             previewContainer.style.display = 'none';
@@ -805,25 +943,40 @@
             submitBtn.disabled = false;
         }
 
-        function closeModal() {
-            modal.classList.remove('open');
-            form.reset();
+        function closeReportModal() {
+            reportModal.classList.remove('open');
+            reportForm.reset();
             pendingLatLng = null;
             currentPhotoData = null;
             previewContainer.style.display = 'none';
             photoInput.value = '';
         }
 
-        function closeWelcome() {
+        function closeWelcomeModal() {
             localStorage.setItem(WELCOME_SEEN_KEY, 'true');
             welcomeModal.classList.remove('open');
         }
 
-        // Event listeners for modals
-        closeBtn.onclick = cancelBtn.onclick = closeModal;
-        startContributionBtn.onclick = closeWelcome;
+        function openSuccessModal(report) {
+            document.getElementById('contributor-name-display').textContent = report.contributor || 'Valued Contributor';
+            successModal.classList.add('open');
+        }
+        function closeSuccessModal() {
+            successModal.classList.remove('open');
+        }
+
+        // --- Event Listeners for Modals ---
+        document.getElementById('close-name-modal').onclick = closeNamePrompt;
+        document.getElementById('close-report-modal').onclick = closeReportModal;
+        document.getElementById('cancel-btn').onclick = closeReportModal;
+        document.getElementById('close-success-modal').onclick = closeSuccessModal;
+        document.getElementById('start-contribution-btn').onclick = closeWelcomeModal;
+        
+        // Universal modal close when clicking outside
         window.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
+            if (e.target === reportModal) closeReportModal();
+            if (e.target === namePromptModal) closeNamePrompt();
+            if (e.target === successModal) closeSuccessModal();
         });
 
         // Check if welcome modal needs to be shown
@@ -851,30 +1004,27 @@
             previewContainer.style.display = 'none';
             photoInput.value = '';
         });
-
-        // ==============================
+        ==============================
         // 6. Telegram API Integration
         // ==============================
         async function sendToTelegram(report) {
-            const { lat, lng, type, desc } = report;
+            const { lat, lng, type, desc, contributor } = report;
             const caption = `🚨 **New Road Issue Report** 🚨\n\n` +
                             `*Issue Type:* ${type}\n` +
                             (desc ? `*Description:* ${desc}\n` : '') +
+                            `*Reported By:* ${contributor}\n` +
                             `*Location:* ${lat.toFixed(6)}, ${lng.toFixed(6)}\n\n` +
                             `[Open Map](https://www.google.com/maps/search/?api=1&query=${lat},${lng})`;
 
             try {
                 if (report.photo) {
-                    // Method 1: Send Photo with location tags
+                    // Method 1: Send Photo
                     const blob = base64ToBlob(report.photo, 'image/jpeg');
                     const formData = new FormData();
                     formData.append('chat_id', TELEGRAM_CHAT_ID);
                     formData.append('caption', caption);
                     formData.append('parse_mode', 'Markdown');
                     formData.append('photo', blob, 'issue_photo.jpg');
-                    // Adding explicit location parameters (optional for photo, but good for context)
-                    formData.append('latitude', lat);
-                    formData.append('longitude', lng);
                     
                     const response = await fetch(TELEGRAM_API_URL + 'sendPhoto', {
                         method: 'POST',
@@ -888,7 +1038,7 @@
                     return true;
 
                 } else {
-                    // Method 2: Send Message with location link
+                    // Method 2: Send Message
                     const response = await fetch(TELEGRAM_API_URL + 'sendMessage', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -913,19 +1063,21 @@
             }
         }
 
-        form.addEventListener('submit', async (e) => {
+        reportForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<div class="loader-dots"><span class="dot dot-1"></span><span class="dot dot-2"></span><span class="dot dot-3"></span></div>';
 
             const type = document.getElementById('issue-type').value;
             const desc = document.getElementById('description').value.trim();
+            const contributorName = loadContributorName() || 'Anonymous';
             
             const report = {
                 lat: pendingLatLng.lat,
                 lng: pendingLatLng.lng,
                 type,
                 desc,
+                contributor: contributorName, // Include contributor name
                 photo: currentPhotoData,
                 time: new Date().toISOString()
             };
@@ -939,9 +1091,9 @@
                 saveReports(reports);
                 addMarker(report);
 
-                // 3. Show Success Notification and Close Modal
-                closeModal();
-                showToast("Thanks for your contribution! You are a responsible person for the nation 🇮🇳");
+                // 3. Show Success Modal and Close Report Modal
+                closeReportModal();
+                openSuccessModal(report);
             } else {
                 // 4. Handle Failure (re-enable button, show error toast)
                 submitBtn.disabled = false;
@@ -951,36 +1103,72 @@
         });
 
         // ==============================
-        // 7. Click to Report
+        // 7. Click to Report & Name Prompt
         // ==============================
         const addIssueBtn = document.getElementById('add-issue-btn');
         let clickMode = false;
-        addIssueBtn.addEventListener('click', () => {
+        
+        function initiateReportMode() {
+            if (!loadContributorName()) {
+                openNamePrompt(initiateReportMode);
+                return;
+            }
             clickMode = !clickMode;
             // Use CSS class for active state styling
             addIssueBtn.classList.toggle('active', clickMode);
 
-            // Using custom modal/toast instead of alert()
             showToast(clickMode 
                 ? 'Report mode activated! Tap anywhere on the map to mark the issue location.'
                 : 'Report mode disabled.'
             );
-        });
+        }
+
+        addIssueBtn.addEventListener('click', initiateReportMode);
 
         map.on('click', (e) => {
             if (!clickMode) return;
             clickMode = false;
             addIssueBtn.classList.remove('active');
-            openModal(e.latlng);
+            
+            if (!loadContributorName()) {
+                 // Open name prompt, then pass the latLng to openReportModal
+                openNamePrompt(() => openReportModal(e.latlng));
+            } else {
+                openReportModal(e.latlng);
+            }
         });
-                // ==============================
-        // 8. Live Location with Pulsing Animation
+        
         // ==============================
-        const locationBtn = document.getElementById('location-btn');
+        // 8. Location Functions (Shared)
+        // ==============================
+        const locationBtn = document.getElementById('location-btn'); // Get the button element here
         let userLocationMarker = null;
         let pulsingCircle = null;
         let watchId = null;
 
+        // Function to reset the location button UI and state
+        function resetLocationUI() {
+             locationBtn.disabled = false;
+             locationBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="4"></circle>
+                <line x1="12" y1="2" x2="12" y2="6"></line>
+                <line x1="12" y1="18" x2="12" y2="22"></line>
+                <line x1="2" y1="12" x2="6" y2="12"></line>
+                <line x1="18" y1="12" x2="22" y2="12"></line>
+            </svg>`;
+            locationBtn.classList.remove('active');
+            if (pulsingCircle) {
+                pulsingCircle.remove();
+                pulsingCircle = null;
+            }
+            if (userLocationMarker) {
+                map.removeLayer(userLocationMarker);
+                userLocationMarker = null;
+            }
+        }
+
+        // Handles the continuous location watching for the 'My Location' button
         locationBtn.addEventListener('click', () => {
             if (!navigator.geolocation) {
                 showToast('Geolocation is not supported by your browser.');
@@ -991,23 +1179,7 @@
             if (watchId) {
                 navigator.geolocation.clearWatch(watchId);
                 watchId = null;
-                locationBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <circle cx="12" cy="12" r="4"></circle>
-                    <line x1="12" y1="2" x2="12" y2="6"></line>
-                    <line x1="12" y1="18" x2="12" y2="22"></line>
-                    <line x1="2" y1="12" x2="6" y2="12"></line>
-                    <line x1="18" y1="12" x2="22" y2="12"></line>
-                </svg>`;
-                if (pulsingCircle) {
-                    pulsingCircle.remove();
-                    pulsingCircle = null;
-                }
-                if (userLocationMarker) {
-                    map.removeLayer(userLocationMarker);
-                    userLocationMarker = null;
-                }
-                locationBtn.classList.remove('active');
+                resetLocationUI();
                 return;
             }
             
@@ -1053,18 +1225,24 @@
                     locationBtn.classList.add('active');
                 },
                 (err) => {
-                    showToast('Error getting location: ' + err.message);
-                    locationBtn.disabled = false;
+                    let errorMessage;
+                    if (err.code === 1) {
+                        errorMessage = 'Location access denied. Please grant permission in your browser settings.';
+                    } else if (err.code === 2) {
+                        errorMessage = 'Location unavailable. Check your internet/GPS.';
+                    } else if (err.code === 3) {
+                        errorMessage = 'Location timed out. Please try again.';
+                    } else {
+                        errorMessage = `Location error: ${err.message}.`;
+                    }
+
+                    console.error('Geolocation Error:', err);
+                    showToast(errorMessage);
+                    
+                    // Cleanup: Stop watching and reset UI
                     if (watchId) navigator.geolocation.clearWatch(watchId);
                     watchId = null;
-                    locationBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <circle cx="12" cy="12" r="4"></circle>
-                        <line x1="12" y1="2" x2="12" y2="6"></line>
-                        <line x1="12" y1="18" x2="12" y2="22"></line>
-                        <line x1="2" y1="12" x2="6" y2="12"></line>
-                        <line x1="18" y1="12" x2="22" y2="12"></line>
-                    </svg>`;
+                    resetLocationUI(); // Use the dedicated reset function
                 },
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
@@ -1079,7 +1257,57 @@
                 }
             });
         });
+        
+        // Function for one-time location request (used by Contribute More)
+        function centerOnUserLocation() {
+            if (!navigator.geolocation) {
+                showToast('Geolocation is not supported by your browser.');
+                return;
+            }
+            
+            showToast('Locating you...');
 
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    const latLng = [latitude, longitude];
+                    map.setView(latLng, 17); // Zoom in on location
+                    
+                    // Briefly highlight the location
+                    L.circle(latLng, {
+                        color: 'var(--success-color)',
+                        fillColor: '#81c784',
+                        fillOpacity: 0.5,
+                        radius: 50 // 50 meter radius
+                    }).addTo(map).bindPopup('Your current location').openPopup().on('popupclose', function(e) {
+                         // Remove the temporary circle after 3 seconds or popup close
+                         setTimeout(() => map.removeLayer(this), 3000); 
+                    });
+                    
+                    showToast('Map centered on your location!');
+                },
+                (err) => {
+                    let errorMessage;
+                    if (err.code === 1) {
+                        errorMessage = 'Location access denied. Cannot center map.';
+                    } else {
+                        errorMessage = 'Could not find your location. Please ensure GPS is enabled.';
+                    }
+                    console.error('Geolocation Error:', err);
+                    showToast(errorMessage);
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+        }
+
+        // 'Contribute More' Button Handler (NEW)
+        contributeMoreBtn.addEventListener('click', () => {
+            closeSuccessModal();
+            centerOnUserLocation();
+        });
+
+
+        
         // ==============================
         // 9. Export
         // ==============================
@@ -1097,5 +1325,4 @@
     </script>
 </body>
 </html>
-
         
