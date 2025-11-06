@@ -31,6 +31,82 @@
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
+            transition: opacity 0.5s ease;
+        }
+        
+        .screen-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+            color: white;
+            z-index: 5000;
+            text-align: center;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease, visibility 0.5s;
+            visibility: hidden;
+        }
+
+        .screen-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+            visibility: visible;
+        }
+        
+        .screen-content {
+            max-width: 500px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(0);
+            transition: transform 0.5s ease;
+        }
+
+        .screen-overlay.open .screen-content {
+            animation: bounceIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .screen-overlay h2 {
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .screen-overlay p {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            line-height: 1.8;
+            font-weight: 500;
+        }
+
+        .screen-overlay .btn-start {
+            background: #34a853; /* Green for action */
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(52, 168, 83, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .screen-overlay .btn-start:hover {
+            background: #2b8444;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 168, 83, 0.6);
         }
 
         header {
@@ -225,7 +301,7 @@
             font-size: 0.95rem;
             color: #444;
         }
-        select, textarea {
+        select, textarea, input[type="text"] {
             width: 100%;
             padding: 0.9rem;
             border: 1.5px solid #e0e0e0;
@@ -234,7 +310,7 @@
             transition: all 0.3s ease;
             background: #fafafa;
         }
-        select:focus, textarea:focus {
+        select:focus, textarea:focus, input[type="text"]:focus {
             outline: none;
             border-color: #1a73e8;
             background: white;
@@ -399,7 +475,34 @@
     </style>
 </head>
 <body>
-    <div id="app">
+    <!-- 1. WELCOME SCREEN (Initial State) -->
+    <div id="welcome-screen" class="screen-overlay open">
+        <div class="screen-content">
+            <h2>Welcome to Viksit Sadak Suraksha Map ✅</h2>
+            <p>
+                Here, you are actively contributing and helping make our roads safe 🙏. You can locate and report critical issues like **Damage Road**, **Drainage** problems, **Garbage** dumping, potential **Land Slides**, and **Accident** black spots.
+            </p>
+            <p>
+                The three main buttons on the map are:
+                <br>🤠 <strong>Report Issue</strong>, <strong>Live Location</strong>, and <strong>Export Data</strong>.
+            </p>
+            <button id="start-contribution-btn" class="btn-start">Start Contribution on Map</button>
+        </div>
+    </div>
+
+    <!-- 2. THANK YOU SCREEN (Post-Submission State) -->
+    <div id="thanks-screen" class="screen-overlay">
+        <div class="screen-content">
+            <h2>Thank You! 🙏</h2>
+            <p>
+                Thanks for your contribution and for being a responsible person of the nation. Your report is a vital step toward a safer community!
+            </p>
+            <button id="contribute-more-btn" class="btn-start">Contribute More</button>
+        </div>
+    </div>
+
+    <!-- 3. MAIN APPLICATION INTERFACE -->
+    <div id="app" style="display: none;">
         <!-- Header -->
         <header>
             <h1>
@@ -410,14 +513,14 @@
         <div id="map"></div>
         <!-- Floating Action Buttons -->
         <div class="controls">
-            <button id="add-issue-btn" class="btn tooltip" data-tip="Report new issue">
+            <button id="add-issue-btn" class="btn tooltip" data-tip="Report new issue (Report Issue)">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <path d="M12 2a10 10 0 0 1 10 10a10 10 0 0 1-10 10a10 10 0 0 1-10-10A10 10 0 0 1 12 2z"/>
                     <path d="M12 8v8"/>
                     <path d="M8 12h8"/>
                 </svg>
             </button>
-            <button id="location-btn" class="btn secondary tooltip" data-tip="Find my location">
+            <button id="location-btn" class="btn secondary tooltip" data-tip="Find my location (Live Location)">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <circle cx="12" cy="12" r="10"></circle>
                     <circle cx="12" cy="12" r="4"></circle>
@@ -427,7 +530,7 @@
                     <line x1="18" y1="12" x2="22" y2="12"></line>
                 </svg>
             </button>
-            <button id="export-btn" class="btn danger tooltip" data-tip="Export all reports">
+            <button id="export-btn" class="btn danger tooltip" data-tip="Download all reports (Export Data)">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                     <polyline points="7 10 12 15 17 10"/>
@@ -437,13 +540,13 @@
         </div>
         <div class="leaderboard">
             <h3>
-                Leaderboard
+                Contribution Leaderboard
                 <span class="sync-info">Last synced: just now</span>
             </h3>
             <ul id="leaderboard-list"></ul>
         </div>
     </div>
-    <!-- Report Modal -->
+  <!-- Report Modal -->
     <div id="report-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -451,12 +554,18 @@
                 <button class="close" aria-label="Close">&times;</button>
             </div>
             <form id="report-form">
+                <label for="contributor-name">Your Name (for Leaderboard)</label>
+                <input type="text" id="contributor-name" placeholder="Enter your name" required>
+
                 <label for="issue-type">Issue Type</label>
                 <select id="issue-type" required>
                     <option value="">Choose issue...</option>
-                    <option value="Pothole">Pothole</option>
-                    <option value="Broken Drain">Broken Drain</option>
+                    <option value="Damage Road (Pothole)">Damage Road (Pothole)</option>
+                    <option value="Broken Drain">Broken Drain / Drainage</option>
                     <option value="Garbage Dump">Garbage Dump</option>
+                    <option value="Land Slide">Land Slide Risk/Area</option>
+                    <option value="Accident Black Spot">Accident Black Spot</option>
+                    <option value="Other">Other Issue</option>
                 </select>
                 <label for="description">Description (optional)</label>
                 <textarea id="description" placeholder="Describe the issue..."></textarea>
@@ -483,8 +592,8 @@
             </form>
         </div>
     </div>
-    <!-- Toast Notification -->
-    <div id="toast">Thanks for being responsible person for nation 🇮🇳</div>
+    <!-- Toast Notification (Used instead of non-compliant alert()) -->
+    <div id="toast"></div>
     <!-- Leaflet JS -->
     <script
         src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -492,29 +601,74 @@
         crossorigin=""
     ></script>
     <script>
+        // Global variables for Map and State Management
+        let map = null;
+        let isMapInitialized = false;
+
         // ==============================
-        // 1. Initialize Map
+        // 1. App State & Screen Transitions
         // ==============================
-        const map = L.map('map').setView([28.6, 77.2], 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors',
-            maxZoom: 19
-        }).addTo(map);
-        const defaultIcon = L.icon({
-            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-            iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
-        });
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const thanksScreen = document.getElementById('thanks-screen');
+        const mainApp = document.getElementById('app');
+        const startBtn = document.getElementById('start-contribution-btn');
+        const contributeMoreBtn = document.getElementById('contribute-more-btn');
+
+        function initializeMap() {
+            if (isMapInitialized) return;
+            // Initialize Map
+            map = L.map('map').setView([28.6, 77.2], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(map);
+            isMapInitialized = true;
+            // Load and display existing markers
+            let reports = loadReports();
+            if (reports.length === 0) {
+                reports = [...sampleReports];
+                saveReports(reports);
+            }
+            reports.forEach(r => addMarker(r, true));
+            // Bind map click logic
+            map.on('click', (e) => {
+                if (!clickMode) return;
+                clickMode = false;
+                addIssueBtn.style.transform = '';
+                showToast('Map click mode disabled. Opening report form.');
+                openModal(e.latlng);
+            });
+            // Re-render map tiles to fit the container correctly after visibility change
+            setTimeout(() => map.invalidateSize(), 500);
+        }
+
+        function setAppState(state) {
+            welcomeScreen.classList.remove('open');
+            thanksScreen.classList.remove('open');
+            mainApp.style.display = 'none';
+
+            if (state === 'welcome') {
+                welcomeScreen.classList.add('open');
+            } else if (state === 'thanks') {
+                thanksScreen.classList.add('open');
+            } else if (state === 'main') {
+                mainApp.style.display = 'flex';
+                initializeMap();
+            }
+        }
+
+        // Event listeners for screen transitions
+        startBtn.addEventListener('click', () => setAppState('main'));
+        contributeMoreBtn.addEventListener('click', () => setAppState('main'));
+        
+        // Initial call
+        setAppState('welcome');
 
         // ==============================
         // 2. LocalStorage & Reports
         // ==============================
         const STORAGE_KEY = 'roadIssues';
-        const USER_KEY = 'demoUserReports';
+        const NAME_CONTRIBUTIONS_KEY = 'nameContributions';
 
         function loadReports() {
             const data = localStorage.getItem(STORAGE_KEY);
@@ -523,34 +677,46 @@
         function saveReports(reports) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
         }
-        function loadUserReportCount() {
-            return parseInt(localStorage.getItem(USER_KEY) || '0', 10);
+        function loadNameContributions() {
+            const data = localStorage.getItem(NAME_CONTRIBUTIONS_KEY);
+            return data ? JSON.parse(data) : {};
         }
-        function saveUserReportCount(count) {
-            localStorage.setItem(USER_KEY, count.toString());
+        function saveNameContributions(contributions) {
+            localStorage.setItem(NAME_CONTRIBUTIONS_KEY, JSON.stringify(contributions));
         }
 
         // ==============================
-        // 3. Leaderboard
+        // 3. Leaderboard/Contribution Update
         // ==============================
         const fakeContributors = [
-            { name: 'Rajesh Kumar', count: 22 },
-            { name: 'Priya Sharma', count: 19 },
-            { name: 'Amit Patel', count: 16 },
-            { name: 'Neha Singh', count: 14 },
-            { name: 'Vikram Mehta', count: 11 }
+            { name: 'Rajesh Kumar (Sample)', count: 22 },
+            { name: 'Priya Sharma (Sample)', count: 19 },
+            { name: 'Amit Patel (Sample)', count: 16 },
         ];
         function updateLeaderboard() {
             const list = document.getElementById('leaderboard-list');
-            const userCount = loadUserReportCount();
-            const all = [...fakeContributors];
-            if (userCount > 0) {
-                all.push({ name: 'You (Demo User)', count: userCount, isYou: true });
-            }
-            all.sort((a, b) => b.count - a.count);
-            list.innerHTML = all.map((p, i) => `
+            const userContributions = loadNameContributions();
+            const realContributors = Object.entries(userContributions)
+                .map(([name, count]) => ({ name, count, isYou: true }));
+
+            const all = [...fakeContributors, ...realContributors];
+            // Aggregate contributions by name (in case samples and real names overlap)
+            const aggregated = all.reduce((acc, current) => {
+                const existing = acc.find(item => item.name.toLowerCase() === current.name.toLowerCase());
+                if (existing) {
+                    existing.count += current.count;
+                } else {
+                    acc.push({...current});
+                }
+                return acc;
+            }, []);
+
+            aggregated.sort((a, b) => b.count - a.count);
+
+            list.innerHTML = aggregated.map((p, i) => `
                 <li>
-                    <span>${i < 3 ? '<strong>#' + (i+1) + '</strong> ' : ''}${p.isYou ? '<span class="you">' + p.name + '</span>' : p.name}</span>
+                    <span>${i < 3 ? '<strong>#' + (i+1) + '</strong> ' : ''}
+                    ${p.isYou ? '<span class="you">' + p.name + '</span>' : p.name}</span>
                     <strong>${p.count} ${p.count === 1 ? 'report' : 'reports'}</strong>
                 </li>
             `).join('');
@@ -562,37 +728,49 @@
         }, 30000);
 
         // ==============================
-        // 4. Sample Reports
+        // 4. Sample Reports and Marker Logic
         // ==============================
+        const defaultIcon = L.icon({
+            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+            iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
         const sampleReports = [
-            { lat: 28.6139, lng: 77.2090, type: 'Pothole', desc: 'Deep pothole causing traffic jam', time: new Date(Date.now() - 86400000).toISOString(), photo: null },
-            { lat: 28.5800, lng: 77.2300, type: 'Broken Drain', desc: 'Missing manhole cover - safety hazard', time: new Date(Date.now() - 172800000).toISOString(), photo: null },
-            { lat: 28.6200, lng: 77.1800, type: 'Garbage Dump', desc: '', time: new Date(Date.now() - 259200000).toISOString(), photo: null }
+            { lat: 28.6139, lng: 77.2090, type: 'Damage Road (Pothole)', desc: 'Deep pothole causing traffic jam', time: new Date(Date.now() - 86400000).toISOString(), photo: null, contributor: 'Rajesh Kumar (Sample)' },
+            { lat: 28.5800, lng: 77.2300, type: 'Broken Drain', desc: 'Missing manhole cover - safety hazard', time: new Date(Date.now() - 172800000).toISOString(), photo: null, contributor: 'Priya Sharma (Sample)' },
+            { lat: 28.6200, lng: 77.1800, type: 'Garbage Dump', desc: 'Illegal dumping site near residential area', time: new Date(Date.now() - 259200000).toISOString(), photo: null, contributor: 'Amit Patel (Sample)' }
         ];
+
         function addMarker(report, isSample = false) {
+            if (!map) return; // Guard against uninitialized map
             const marker = L.marker([report.lat, report.lng], { icon: defaultIcon }).addTo(map);
             let html = `<strong style="color:#1a73e8; font-size:1.1em;">${report.type}</strong>`;
+            html += `<br><small>Reported by: <strong>${report.contributor}</strong></small>`;
             if (report.desc) html += `<br><em>${report.desc}</em>`;
             if (report.photo) {
                 html += `<br><img src="${report.photo}" style="max-width:100%; margin-top:10px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">`;
             }
-            html += `<br><small style="color:#666;">${new Date(report.time).toLocaleString()}</small>`;
+            html += `<br><small style="color:#666; display:block; margin-top:5px;">${new Date(report.time).toLocaleString()}</small>`;
             marker.bindPopup(html, { maxWidth: 300 });
+
             if (!isSample) {
-                const count = loadUserReportCount() + 1;
-                saveUserReportCount(count);
+                const contributions = loadNameContributions();
+                const currentCount = contributions[report.contributor] || 0;
+                contributions[report.contributor] = currentCount + 1;
+                saveNameContributions(contributions);
                 updateLeaderboard();
+                
+                // Show thanks screen after 1 second delay
+                setTimeout(() => setAppState('thanks'), 1000); 
             }
         }
-        let reports = loadReports();
-        if (reports.length === 0) {
-            reports = [...sampleReports];
-            saveReports(reports);
-        }
-        reports.forEach(r => addMarker(r, true));
 
         // ==============================
-        // 5. Modal & Photo Upload
+        // 5. Modal, Photo Upload & Submission
         // ==============================
         const modal = document.getElementById('report-modal');
         const form = document.getElementById('report-form');
@@ -605,9 +783,6 @@
         let pendingLatLng = null;
         let currentPhotoData = null;
 
-        // ==============================
-        // Toast Notification Function
-        // ==============================
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.textContent = msg;
@@ -620,7 +795,7 @@
         function openModal(latLng) {
             pendingLatLng = latLng;
             modal.classList.add('open');
-            setTimeout(() => document.getElementById('issue-type').focus(), 100);
+            document.getElementById('contributor-name').focus();
             currentPhotoData = null;
             previewContainer.style.display = 'none';
             photoInput.value = '';
@@ -646,7 +821,7 @@
                     currentPhotoData = e.target.result;
                     previewImg.src = currentPhotoData;
                     previewContainer.style.display = 'block';
-                    showToast("Thanks for being responsible person for nation 🇮🇳");
+                    showToast("Photo added successfully!");
                 };
                 reader.readAsDataURL(file);
             }
@@ -660,16 +835,25 @@
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
+            const contributorName = document.getElementById('contributor-name').value.trim();
             const type = document.getElementById('issue-type').value;
             const desc = document.getElementById('description').value.trim();
+            
+            if (!contributorName) {
+                showToast("Please enter your name for the leaderboard.");
+                return;
+            }
+
             const report = {
                 lat: pendingLatLng.lat,
                 lng: pendingLatLng.lng,
                 type,
                 desc,
                 photo: currentPhotoData,
-                time: new Date().toISOString()
+                time: new Date().toISOString(),
+                contributor: contributorName // Add contributor name
             };
+            reports = loadReports(); // Reload just in case
             reports.push(report);
             saveReports(reports);
             addMarker(report);
@@ -677,35 +861,41 @@
         });
 
         // ==============================
-        // 6. Click to Report
+        // 6. Click to Report (Report Issue Button)
         // ==============================
         const addIssueBtn = document.getElementById('add-issue-btn');
         let clickMode = false;
         addIssueBtn.addEventListener('click', () => {
             clickMode = !clickMode;
             addIssueBtn.style.transform = clickMode ? 'translateY(-3px) scale(1.1)' : '';
-            alert(clickMode 
-                ? 'Tap anywhere on the map to report an issue.'
-                : 'Map click mode disabled.'
+            showToast(clickMode 
+                ? 'Report Issue Mode: Tap anywhere on the map to mark a location.'
+                : 'Report Issue Mode disabled.'
             );
-        });
-        map.on('click', (e) => {
-            if (!clickMode) return;
-            clickMode = false;
-            addIssueBtn.style.transform = '';
-            openModal(e.latlng);
         });
 
         // ==============================
-        // 7. Live Location with Pulsing Animation and Moving Marker
+        // 7. Live Location (Live Location Button)
         // ==============================
         const locationBtn = document.getElementById('location-btn');
         let userLocationMarker = null;
         let pulsingCircle = null;
         let watchId = null;
+        
+        // Remove map-related elements when map is moved
+        if (map) {
+             map.on('move', () => {
+                if (userLocationMarker && pulsingCircle) {
+                    const point = map.latLngToContainerPoint(userLocationMarker.getLatLng());
+                    pulsingCircle.style.left = point.x + 'px';
+                    pulsingCircle.style.top = point.y + 'px';
+                }
+            });
+        }
+        
         locationBtn.addEventListener('click', () => {
             if (!navigator.geolocation) {
-                alert('Geolocation is not supported by your browser.');
+                showToast('Geolocation is not supported by your browser.');
                 return;
             }
             if (watchId) {
@@ -727,6 +917,7 @@
                     map.removeLayer(userLocationMarker);
                     userLocationMarker = null;
                 }
+                showToast('Live location tracking stopped.');
                 return;
             }
             locationBtn.disabled = true;
@@ -737,35 +928,40 @@
                     map.setView([latitude, longitude], 17);
                     if (userLocationMarker) {
                         userLocationMarker.setLatLng([latitude, longitude]);
+                        userLocationMarker.setRadius(accuracy / 2 > 10 ? accuracy / 2 : 10);
                         userLocationMarker.openPopup();
                     } else {
                         userLocationMarker = L.circleMarker([latitude, longitude], {
-                            radius: 10,
+                            radius: accuracy / 2 > 10 ? accuracy / 2 : 10,
                             fillColor: '#1a73e8',
                             color: '#0d47a1',
                             weight: 3,
                             opacity: 1,
                             fillOpacity: 0.8
-                        }).addTo(map).bindPopup('You are here').openPopup();
+                        }).addTo(map).bindPopup('You are here (Accuracy: ' + Math.round(accuracy) + 'm)').openPopup();
                     }
-                    // Pulsing circle
+                    
                     if (!pulsingCircle) {
                         pulsingCircle = document.createElement('div');
                         pulsingCircle.className = 'pulsing-circle';
                         document.body.appendChild(pulsingCircle);
                     }
-                    const point = map.latLngToContainerPoint([latitude, longitude]);
-                    pulsingCircle.style.left = point.x + 'px';
-                    pulsingCircle.style.top = point.y + 'px';
+                    // Update pulsing circle position when map has initialized
+                    if (isMapInitialized) {
+                        const point = map.latLngToContainerPoint([latitude, longitude]);
+                        pulsingCircle.style.left = point.x + 'px';
+                        pulsingCircle.style.top = point.y + 'px';
+                    }
 
                     locationBtn.disabled = false;
                     locationBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <circle cx="12" cy="12" r="10" stroke-dasharray="4 4"></circle>
                         <circle cx="12" cy="12" r="4"></circle>
                     </svg>`;
+                    showToast('Live location updated!');
                 },
                 (err) => {
-                    alert('Location access denied or unavailable.');
+                    showToast('Location access denied or unavailable. Please enable location services.');
                     locationBtn.disabled = false;
                     locationBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <circle cx="12" cy="12" r="10"></circle>
@@ -786,18 +982,20 @@
         document.head.appendChild(style);
 
         // ==============================
-        // 8. Export
+        // 8. Export Data (Export Data Button)
         // ==============================
         document.getElementById('export-btn').addEventListener('click', () => {
-            const data = JSON.stringify(reports, null, 2);
+            const data = JSON.stringify(loadReports(), null, 2);
             const blob = new Blob([data], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `road-issues-${new Date().toISOString().slice(0,10)}.json`;
+            a.download = `road-issues-data-${new Date().toISOString().slice(0,10)}.json`;
             a.click();
             URL.revokeObjectURL(url);
+            showToast('Exported all data as JSON!');
         });
     </script>
 </body>
 </html>
+
